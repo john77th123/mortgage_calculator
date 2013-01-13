@@ -1,6 +1,8 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import sys, os, sip, math
+
+windowObject = "jlMortgageCalculator"
    
 class paymentCalculator(QMainWindow):
     def __init__(self, parent=None):
@@ -61,7 +63,7 @@ class paymentCalculator(QMainWindow):
         self.addItemLabel.setFixedWidth(80)
         
         self.addItemValue = QLineEdit()
-        self.addItemValue.setPlaceholderText("Item Name")
+        #self.addItemValue.setPlaceholderText("Item Name")
         self.addItemValue.setMinimumWidth(100)
         
         self.addItemButton.clicked.connect(self.addNewItem)
@@ -216,10 +218,19 @@ class paymentCalculator(QMainWindow):
         totalMonthlyExpense = houseExpense + expenseTotal
 
         return ["%.2f"%houseExpense,"%.2f"%expenseTotal,"%.2f"%totalMonthlyExpense]
+   
+def getMayaWindow():
+    import maya.OpenMayaUI as mui
+    pointer = mui.MQtUtil.mainWindow()
+    return sip.wrapinstance(long(pointer), QObject)
+
+import maya.cmds as cmds
+
+def mayaRun():
+    if cmds.window(windowObject, q=1, ex=1):
+        cmds.deleteUI(windowObject)
+    global gui
+    gui = paymentCalculator(getMayaWindow())
+    gui.show()
     
-    
-if __name__ == "__main__":
-    app = QApplication([])   
-    window = paymentCalculator()
-    window.show()
-    sys.exit(app.exec_())
+mayaRun()

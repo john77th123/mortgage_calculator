@@ -1,7 +1,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import sys, os, sip, math
-    
+   
 class paymentCalculator(QMainWindow):
     def __init__(self, parent=None):
         super(paymentCalculator, self).__init__(parent)
@@ -10,6 +10,7 @@ class paymentCalculator(QMainWindow):
         self.mainLayout = QVBoxLayout()
         self.mainWidget.setLayout(self.mainLayout)
         
+        self.setWindowTitle("Mortgage Payment Calculator")
         self.setObjectName("jlMortgageCalculator")
         
         #Mortgage item part
@@ -37,9 +38,9 @@ class paymentCalculator(QMainWindow):
         self.itemLayout = QVBoxLayout()
         self.items = [
                 "Food",
-                "Allowances",
-                "Verizon",
+                "CellPhone",
                 "Utility",
+                "CarPayment",
                 "AutoInsurace",
                 "Cable",
                 "Gas"
@@ -74,27 +75,33 @@ class paymentCalculator(QMainWindow):
         line.setFrameStyle(QFrame.HLine | QFrame.Sunken )
         self.mainLayout.addWidget(line)
 
-        self.houseExpenseLayout = QVBoxLayout()
-        self.houseExpenseLabel = QLabel("Total House Payment")
+        self.houseExpenseLayout = QHBoxLayout()
+        self.houseExpenseLabel = QLabel("Monthly House Payment:")
+        self.houseExpenseLabel.setFixedWidth(150)
         self.houseExpenseValue = QLineEdit()
+        self.houseExpenseValue.setReadOnly(1)
         
         self.houseExpenseLayout.addWidget(self.houseExpenseLabel)
         self.houseExpenseLayout.addWidget(self.houseExpenseValue)
         
         self.mainLayout.addLayout(self.houseExpenseLayout)
 
-        self.monthlyExpenseLayout = QVBoxLayout()
-        self.monthlyExpenseLabel = QLabel("Monthly Expenses")
+        self.monthlyExpenseLayout = QHBoxLayout()
+        self.monthlyExpenseLabel = QLabel("Other Expenses:")
+        self.monthlyExpenseLabel.setFixedWidth(150)
         self.monthlyExpenseValue = QLineEdit()
+        self.monthlyExpenseValue.setReadOnly(1)
         
         self.monthlyExpenseLayout.addWidget(self.monthlyExpenseLabel)
         self.monthlyExpenseLayout.addWidget(self.monthlyExpenseValue)
         
         self.mainLayout.addLayout(self.monthlyExpenseLayout)
         
-        self.monthlyTotalExpenseLayout = QVBoxLayout()
-        self.monthlyTotalExpenseLabel = QLabel("Total Monthly Expenses")
+        self.monthlyTotalExpenseLayout = QHBoxLayout()
+        self.monthlyTotalExpenseLabel = QLabel("Monthly Expense Sum:")
+        self.monthlyTotalExpenseLabel.setFixedWidth(150)
         self.monthlyTotalExpenseValue = QLineEdit()
+        self.monthlyTotalExpenseValue.setReadOnly(1)
         
         self.monthlyTotalExpenseLayout.addWidget(self.monthlyTotalExpenseLabel)
         self.monthlyTotalExpenseLayout.addWidget(self.monthlyTotalExpenseValue)
@@ -106,7 +113,6 @@ class paymentCalculator(QMainWindow):
         calculateButton.clicked.connect(self.calculate)
         
         setDefaultButton = QPushButton(text="Set Default")
-        self.mainLayout.addWidget(setDefaultButton)
         setDefaultButton.clicked.connect(self.setDefault)
         self.setDefault()
     
@@ -142,6 +148,7 @@ class paymentCalculator(QMainWindow):
         edit = QLineEdit()
         setattr(self, item + "Value", edit)
         value = getattr(self, item + "Value")
+        value.editingFinished.connect(self.calculate)
         value.setMinimumWidth(100)
 
         layout.addWidget(label)
@@ -174,39 +181,32 @@ class paymentCalculator(QMainWindow):
         self.calculate()
         
     def setDefault(self):
-        self.LoanAmountValue.setText("320000")
+        self.LoanAmountValue.setText("0")
         self.InterestRateValue.setText("3.7")
         self.TermValue.setText("360")
         self.HOAValue.setText("250")
         self.TaxValue.setText("300")
         self.InsuranceValue.setText("60")
+
         
-        self.FoodValue.setText("500")
-        self.AllowancesValue.setText("200")
-        self.VerizonValue.setText("120")
-        self.UtilityValue.setText("100")
-        self.AutoInsuraceValue.setText("100")
-        self.CableValue.setText("60")
-        self.GasValue.setText("300")
-        self.calculate()
-        
-    def calculate(self):
+    def calculate(self): 
         returnResults = []
         for cur in self.mortgageItems:
             value = getattr(self, cur + "Value").text()
             if value:
                 returnResults.append(float(value))
             else:
-                returnRestults.append(0)
+                returnResults.append(0)
+                
         result = self.printPayment(returnResults[0], returnResults[1]/1200, returnResults[2], returnResults[3], returnResults[4], returnResults[5])
         self.houseExpenseValue.setText(str(result[0]))
         self.monthlyExpenseValue.setText(str(result[1]))
         self.monthlyTotalExpenseValue.setText(str(result[2]))
         
     
-    def printPayment(self, loanAmount, interestRate, term, tax=0, hoa=0, insurance=0, income=0):
+    def printPayment(self, loanAmount, interestRate, term, tax=0, hoa=0, insurance=0):
         houseExpense = (loanAmount* (interestRate*math.pow((1+interestRate),term))) / (math.pow((1+interestRate),term) -1) + tax + hoa + insurance
-
+        
         expenseTotal = 0
         for cur in self.items:
             value = getattr(self, cur + "Value").text()
@@ -214,20 +214,8 @@ class paymentCalculator(QMainWindow):
                 expenseTotal += float(value)
  
         totalMonthlyExpense = houseExpense + expenseTotal
-        print "House expense total is %f"%houseExpense
-        print "Monthly expense total is %f"%expenseTotal
-        print "Total monthly expense total is %f"%totalMonthlyExpense
-        print "Your monthly income is %f. Gee... make some more money dude."%income
-        
-        if totalMonthlyExpense > income:
-            difference = totalMonthlyExpense - income
-            print "Don't even think about it. You are %f short. "%difference
-            
-        else:
-            difference = income - totalMonthlyExpense
-            print "Yeah, you can afford this house and have plenty money left over like %f"%difference
-        
-        return houseExpense, expenseTotal, totalMonthlyExpense
+
+        return ["%.2f"%houseExpense,"%.2f"%expenseTotal,"%.2f"%totalMonthlyExpense]
     
     
 if __name__ == "__main__":
